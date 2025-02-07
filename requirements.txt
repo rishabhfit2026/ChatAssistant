@@ -1,9 +1,7 @@
 Flask
 flask-cors
-sqlite3
 gunicorn
 streamlit
-sqlite3
 flask
 requests
 pandas
