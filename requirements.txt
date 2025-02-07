@@ -4,5 +4,3 @@ gunicorn
 streamlit
 requests
 pandas
-sqlite3  # Ensure SQLite support (not always needed explicitly)
-numpy    # Used for numerical operations, may be required by pandas
