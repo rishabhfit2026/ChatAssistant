@@ -24,10 +24,10 @@ def ask():
     response = "I don't understand that question."
 
     # Get employees from a specific department
-    if "employees in the" in user_message and "department" in user_message:
-        parts = user_message.split("in the")
+    if "employees in the" in user_message or "employees working in the" in user_message or "details of employees from the" in user_message:
+        parts = user_message.split("the")
         if len(parts) > 1:
-            department = parts[1].split("department")[0].strip().capitalize()
+            department = parts[1].replace("department", "").strip().capitalize()
             employees = query_db("SELECT Name FROM Employees WHERE Department = ?", (department,))
             response = ", ".join([emp[0] for emp in employees]) if employees else f"No employees found in the {department} department."
 
@@ -35,7 +35,7 @@ def ask():
     elif "who is the manager of the" in user_message:
         parts = user_message.split("of the")
         if len(parts) > 1:
-            department = parts[1].split("department")[0].strip().capitalize()
+            department = parts[1].replace("department", "").strip().capitalize()
             manager = query_db("SELECT Manager FROM Departments WHERE Name = ?", (department,))
             response = manager[0][0] if manager else f"No manager found for {department} department."
 
@@ -55,7 +55,7 @@ def ask():
             employees = query_db("SELECT Name FROM Employees WHERE Hire_Date < ?", (date,))
             response = ", ".join([emp[0] for emp in employees]) if employees else "No employees hired before this date."
 
-    # Get total salary expense for a department (supports both "for Engineering" and "for the Engineering department")
+    # Get total salary expense for a department
     elif "total salary expense for" in user_message:
         parts = user_message.split("total salary expense for")
         if len(parts) > 1:
