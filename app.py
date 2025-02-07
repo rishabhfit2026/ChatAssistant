@@ -19,7 +19,7 @@ def home():
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.json
-    user_message = data.get("message", "").lower()
+    user_message = data.get("message", "").lower().strip()
 
     response = "I don't understand that question."
 
@@ -27,7 +27,7 @@ def ask():
     if "employees in the" in user_message and "department" in user_message:
         parts = user_message.split("in the")
         if len(parts) > 1:
-            department = parts[1].split("department")[0].strip().capitalize()
+            department = parts[1].replace("department", "").strip().capitalize()
             employees = query_db("SELECT Name FROM Employees WHERE Department = ?", (department,))
             response = ", ".join([emp[0] for emp in employees]) if employees else f"No employees found in the {department} department."
 
@@ -35,7 +35,7 @@ def ask():
     elif "who is the manager of the" in user_message:
         parts = user_message.split("of the")
         if len(parts) > 1:
-            department = parts[1].split("department")[0].strip().capitalize()
+            department = parts[1].replace("department", "").strip().capitalize()
             manager = query_db("SELECT Manager FROM Departments WHERE Name = ?", (department,))
             response = manager[0][0] if manager else f"No manager found for {department} department."
 
@@ -55,38 +55,28 @@ def ask():
             employees = query_db("SELECT Name FROM Employees WHERE Hire_Date < ?", (date,))
             response = ", ".join([emp[0] for emp in employees]) if employees else "No employees hired before this date."
 
-    # Get total salary expense for a department
-    elif "total salary expense for the" in user_message:
-        parts = user_message.split("for the")
+    # Get total salary expense for a department (Handles both "for Engineering" and "for the Engineering department")
+    elif "total salary expense for" in user_message:
+        parts = user_message.split("for")
         if len(parts) > 1:
-            department = parts[1].split("department")[0].strip().capitalize()
+            department = parts[1].replace("the", "").replace("department", "").strip().capitalize()
             salary = query_db("SELECT SUM(Salary) FROM Employees WHERE Department = ?", (department,))
             response = f"Total salary expense for {department} department is ${salary[0][0]:,}" if salary and salary[0][0] else f"No data for {department} department."
 
     # List all departments and their managers
     elif "list all departments and their managers" in user_message:
         departments = query_db("SELECT Name, Manager FROM Departments")
-        if departments:
-            response = "\n".join([f"{dept[0]} - {dept[1]}" for dept in departments])
-        else:
-            response = "No department data available. Please check the database."
+        response = "\n".join([f"{dept[0]} - {dept[1]}" for dept in departments]) if departments else "No department data available. Please check the database."
 
     # Get the highest salary in the company
     elif "highest salary" in user_message:
         result = query_db("SELECT Name, Salary, Department FROM Employees ORDER BY Salary DESC LIMIT 1")
-        if result:
-            name, salary, department = result[0]
-            response = f"The highest salary is ${salary:,} ({name} - {department})"
-        else:
-            response = "No salary data available."
+        response = f"The highest salary is ${result[0][1]:,} ({result[0][0]} - {result[0][2]})" if result else "No salary data available."
 
     # Get the average salary of employees
     elif "average salary" in user_message:
         avg_salary = query_db("SELECT AVG(Salary) FROM Employees")
-        if avg_salary and avg_salary[0][0] is not None:
-            response = f"The average salary is ${avg_salary[0][0]:,.2f}"
-        else:
-            response = "No salary data available."
+        response = f"The average salary is ${avg_salary[0][0]:,.2f}" if avg_salary and avg_salary[0][0] is not None else "No salary data available."
 
     return jsonify({"response": response})
 
