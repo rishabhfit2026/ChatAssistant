@@ -3,14 +3,18 @@ import sqlite3
 
 app = Flask(__name__)
 
-# Function to get data from the database
+# Function to get data from the database safely
 def query_db(query, args=()):
-    conn = sqlite3.connect("chatbot.db")
-    cursor = conn.cursor()
-    cursor.execute(query, args)
-    result = cursor.fetchall()
-    conn.close()
-    return result
+    try:
+        conn = sqlite3.connect("chatbot.db")
+        cursor = conn.cursor()
+        cursor.execute(query, args)
+        result = cursor.fetchall()
+        conn.close()
+        return result
+    except sqlite3.Error as e:
+        print("Database error:", e)
+        return []
 
 @app.route("/")
 def home():
@@ -41,9 +45,10 @@ def ask():
     elif "total salary expense for the" in user_message:
         department = user_message.split("for the")[1].split("department")[0].strip().capitalize()
         salary = query_db("SELECT SUM(Salary) FROM Employees WHERE Department = ?", (department,))
-        response = f"Total salary expense for {department} department is ${salary[0][0]:,}" if salary[0][0] else f"No data for {department} department."
+        response = f"Total salary expense for {department} department is ${salary[0][0]:,}" if salary and salary[0][0] else f"No data for {department} department."
 
     return jsonify({"response": response})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # ✅ Corrected for Streamlit Cloud Deployment
+    app.run(host="0.0.0.0", port=8080)
