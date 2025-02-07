@@ -61,7 +61,7 @@ def ask():
         if len(parts) > 1:
             department = parts[1].split("department")[0].strip().capitalize()
             salary = query_db("SELECT SUM(Salary) FROM Employees WHERE Department = ?", (department,))
-            response = f"Total salary expense for {department} department is ${salary[0][0]:,}" if salary[0][0] else f"No data for {department} department."
+            response = f"Total salary expense for {department} department is ${salary[0][0]:,}" if salary and salary[0][0] else f"No data for {department} department."
 
     # List all departments and their managers
     elif "list all departments and their managers" in user_message:
@@ -70,6 +70,15 @@ def ask():
             response = "\n".join([f"{dept[0]} - {dept[1]}" for dept in departments])
         else:
             response = "No department data available. Please check the database."
+
+    # Get the highest salary in the company
+    elif "highest salary" in user_message:
+        result = query_db("SELECT Name, Salary, Department FROM Employees ORDER BY Salary DESC LIMIT 1")
+        if result:
+            name, salary, department = result[0]
+            response = f"The highest salary is ${salary:,} ({name} - {department})"
+        else:
+            response = "No salary data available."
 
     # Get the average salary of employees
     elif "average salary" in user_message:
